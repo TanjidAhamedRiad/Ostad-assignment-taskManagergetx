@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:get/route_manager.dart';
+import 'package:task_manager/UI/Screen/Main_Button_NavBar_Screen.dart';
+import 'package:task_manager/UI/Screen/SignInScreen.dart';
 import 'package:task_manager/UI/Utils/app_colors.dart';
+import 'package:task_manager/controller_binders.dart';
 
 import 'UI/Screen/SplashScreen.dart';
 
 class TaskManagerApp extends StatefulWidget {
-  const TaskManagerApp({super.key});
+   const TaskManagerApp({super.key});
   
   static GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
@@ -17,7 +21,7 @@ class _TaskManagerAppState extends State<TaskManagerApp> {
   
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    return GetMaterialApp(
       debugShowCheckedModeBanner: false,
       navigatorKey: TaskManagerApp.navigatorKey,
       theme: ThemeData(
@@ -28,7 +32,13 @@ class _TaskManagerAppState extends State<TaskManagerApp> {
         elevatedButtonTheme: elevatedBottunThemeData()
         
       ),
-      home: const SplashScreen(),
+      initialBinding: ControllerBinders(),
+      initialRoute: '/',
+      getPages:  [
+        GetPage(name: SplashScreen.name, page: () => const SplashScreen()),
+        GetPage(name: MainButtonNavbarScreen.name, page: () => const MainButtonNavbarScreen()),
+        GetPage(name: SignInScreen.name, page: () => const SignInScreen()),
+      ],
     );
   }
 

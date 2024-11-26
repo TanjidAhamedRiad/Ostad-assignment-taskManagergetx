@@ -10,6 +10,7 @@ import '../Widgets/screenBackground.dart';
 
 
 class SplashScreen extends StatefulWidget {
+  static const String name = '/';
   const SplashScreen({super.key});
   @override
   State<SplashScreen> createState() => _SplashScreenState();

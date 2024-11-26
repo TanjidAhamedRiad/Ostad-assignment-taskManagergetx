@@ -1,8 +1,12 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:get/get_common/get_reset.dart';
+import 'package:get/get_core/src/get_main.dart';
 import 'package:task_manager/Data/Models/Network_Response.dart';
 import 'package:task_manager/Data/Services/Network_Caller.dart';
 import 'package:task_manager/Data/Utils/Urls.dart';
+import 'package:task_manager/UI/Controllers/Signup_controller.dart';
 import 'package:task_manager/UI/Utils/app_colors.dart';
 import 'package:task_manager/UI/Widgets/screenBackground.dart';
 import '../Widgets/Center_Circular_Progress_Indicator.dart';
@@ -17,12 +21,7 @@ class SignUpScreen extends StatefulWidget {
 
 class _SignUpScreenState extends State<SignUpScreen> {
   final GlobalKey<FormState> _globalKey = GlobalKey<FormState>();
-  final TextEditingController emailCtrl = TextEditingController();
-  final TextEditingController firstNameCtrl = TextEditingController();
-  final TextEditingController lastNameCtrl = TextEditingController();
-  final TextEditingController phoneCtrl = TextEditingController();
-  final TextEditingController PassCtrl = TextEditingController();
-
+  final SignUpController signUpController = Get.put(SignUpController());
   bool inProgress = false;
 
   @override
@@ -90,157 +89,115 @@ class _SignUpScreenState extends State<SignUpScreen> {
     return Form(
       key: _globalKey,
       child: Column(
-        children: [
-          TextFormField(
-            autovalidateMode: AutovalidateMode.onUserInteraction,
-            keyboardType: TextInputType.emailAddress,
-            controller: emailCtrl,
-            decoration: const InputDecoration(
-              hintText: "Email",
+          children: [
+            TextFormField(
+              autovalidateMode: AutovalidateMode.onUserInteraction,
+              keyboardType: TextInputType.emailAddress,
+              controller:  signUpController.emailCtrl,
+              decoration: const InputDecoration(
+                hintText: "Email",
+              ),
+              validator: (String? value) {
+                if (value?.isEmpty ?? true) {
+                  return 'Enter Valid Email';
+                }
+                return null;
+              },
             ),
-            validator: (String? value) {
-              if (value?.isEmpty ?? true) {
-                return 'Enter Valid Email';
+            const SizedBox(
+              height: 8,
+            ),
+            TextFormField(
+              autovalidateMode: AutovalidateMode.onUserInteraction,
+              controller:  signUpController.firstNameCtrl,
+              decoration: const InputDecoration(
+                hintText: "First Name",
+              ),
+              validator: (String? value) {
+                if (value?.isEmpty ?? true) {
+                  return 'Enter Valid First name';
+                }
+                return null;
+              },
+            ),
+            const SizedBox(
+              height: 8,
+            ),
+            TextFormField(
+              autovalidateMode: AutovalidateMode.onUserInteraction,
+              controller: signUpController.lastNameCtrl,
+              decoration: const InputDecoration(
+                hintText: "Last Name",
+              ),
+              validator: (String? value) {
+                if (value?.isEmpty ?? true) {
+                  return 'Enter Valid last name';
+                }
+                return null;
+              },
+            ),
+            const SizedBox(
+              height: 8,
+            ),
+            TextFormField(
+              autovalidateMode: AutovalidateMode.onUserInteraction,
+              controller:  signUpController.phoneCtrl,
+              keyboardType: TextInputType.phone,
+              decoration: const InputDecoration(
+                hintText: "Mobile",
+              ),
+              validator: (String? value) {
+                if (value?.isEmpty ?? true) {
+                  return 'Enter Valid number';
+                }
+                return null;
+              },
+            ),
+            const SizedBox(
+              height: 8,
+            ),
+            TextFormField(
+              controller:  signUpController.passCtrl,
+              decoration: const InputDecoration(
+                hintText: "Password",
+              ),
+              validator: (String? value) {
+                if (value?.isEmpty ?? true) {
+                  return 'Enter Valid password';
+                }
+                return null;
+              },
+            ),
+            const SizedBox(
+              height: 20,
+            ),
+            GetBuilder<SignUpController>(
+              builder: (controller) {
+                return Visibility(
+                  visible: !controller.inProgress,
+                  replacement: const CenterCircularProgressIndicator(),
+                  child: ElevatedButton(
+                    onPressed: onTapNextButton,
+                    child: const Icon(Icons.arrow_circle_right_outlined),
+                  ),
+                );
               }
-              return null;
-            },
-          ),
-          const SizedBox(
-            height: 8,
-          ),
-          TextFormField(
-            autovalidateMode: AutovalidateMode.onUserInteraction,
-            controller: firstNameCtrl,
-            decoration: const InputDecoration(
-              hintText: "First Name",
             ),
-            validator: (String? value) {
-              if (value?.isEmpty ?? true) {
-                return 'Enter Valid First name';
-              }
-              return null;
-            },
-          ),
-          const SizedBox(
-            height: 8,
-          ),
-          TextFormField(
-            autovalidateMode: AutovalidateMode.onUserInteraction,
-            controller: lastNameCtrl,
-            decoration: const InputDecoration(
-              hintText: "Last Name",
-            ),
-            validator: (String? value) {
-              if (value?.isEmpty ?? true) {
-                return 'Enter Valid last name';
-              }
-              return null;
-            },
-          ),
-          const SizedBox(
-            height: 8,
-          ),
-          TextFormField(
-            autovalidateMode: AutovalidateMode.onUserInteraction,
-            controller: phoneCtrl,
-            keyboardType: TextInputType.phone,
-            decoration: const InputDecoration(
-              hintText: "Mobile",
-            ),
-            validator: (String? value) {
-              if (value?.isEmpty ?? true) {
-                return 'Enter Valid number';
-              }
-              return null;
-            },
-          ),
-          const SizedBox(
-            height: 8,
-          ),
-          TextFormField(
-            // autovalidateMode: AutovalidateMode.onUserInteraction,
-            controller: PassCtrl,
-            decoration: const InputDecoration(
-              hintText: "Password",
-            ),
-            validator: (String? value) {
-              if (value?.isEmpty ?? true) {
-                return 'Enter Valid password';
-              }
-              return null;
-            },
-          ),
-          const SizedBox(
-            height: 20,
-          ),
-          Visibility(
-            visible: !inProgress,
-            replacement: const CenterCircularProgressIndicator(),
-            child: ElevatedButton(
-              onPressed: onTapNextButton,
-              child: const Icon(Icons.arrow_circle_right_outlined),
-            ),
-          ),
-        ],
-      ),
+          ],
+        ),
     );
   }
 
   void onTapNextButton() {
     if (_globalKey.currentState!.validate()) {
-      signUp();
+      signUpController.signUp();
     }
   }
 
-  Future<void> signUp() async {
-    inProgress = true;
-    setState(() {});
-
-    Map<String, dynamic> requestBody = {
-      "email": emailCtrl.text.trim(),
-      "firstName": firstNameCtrl.text.trim(),
-      "lastName": lastNameCtrl.text.trim(),
-      "mobile": phoneCtrl.text.trim(),
-      "password": PassCtrl.text.trim(),
-      "photo": ""
-    };
-
-    NetworkResponse response =
-        await NetworkCaller.postRequest(Urls.registration, requestBody);
-
-    inProgress = false;
-    setState(() {});
-
-    if (response.isSuccess) {
-
-      
-      clearTextField();
-      showSnackBarMessage(context, 'New user created');
-    } else {
-      showSnackBarMessage(context, response.errorMessage, true);
-    }
-  }
-
-  void clearTextField() {
-    emailCtrl.clear();
-    firstNameCtrl.clear();
-    lastNameCtrl.clear();
-    phoneCtrl.clear();
-    PassCtrl.clear();
-  }
 
   void onTapSignIn() {
     Navigator.pop(context);
   }
 
-  @override
-  void dispose() {
-    super.dispose();
 
-    emailCtrl.dispose();
-    firstNameCtrl.dispose();
-    lastNameCtrl.dispose();
-    phoneCtrl.dispose();
-    PassCtrl.dispose();
-  }
 }

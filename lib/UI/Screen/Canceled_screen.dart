@@ -1,63 +1,42 @@
 import 'package:flutter/material.dart';
+import 'package:task_manager/UI/Controllers/cancelled_screen_controller.dart';
+import 'package:task_manager/UI/Widgets/Center_Circular_Progress_Indicator.dart';
 
-import '../../Data/Models/Network_Response.dart';
-import '../../Data/Models/TaskListModel.dart';
-import '../../Data/Services/Network_Caller.dart';
-import '../../Data/Utils/Urls.dart';
-import '../Widgets/SnackBarMessage.dart';
+import '../Controllers/completed_screen_controller.dart';
 import '../Widgets/Task_Card.dart';
+import 'package:get/get.dart';
 
-class CancelScreen extends StatefulWidget {
-  const CancelScreen({super.key});
-  
+class CancelScreen extends StatelessWidget {
+  CancelScreen({super.key});
 
-  @override
-  State<CancelScreen> createState() => _CancelScreenState();
-}
-
-class _CancelScreenState extends State<CancelScreen> {
-  List canceledTaskList = [];
-  bool canceledTaskInpogress = false;
-
-  @override
-  void initState() {
-    super.initState();
-    canceledTaskData();
-  }
+  final CancelledScreenController cancelledScreenController =
+      Get.find<CancelledScreenController>();
+  final controller = Get.find<CancelledScreenController>();
 
   @override
   Widget build(BuildContext context) {
-    return ListView.separated(
-      itemCount: canceledTaskList.length,
-      itemBuilder: (context, index) {
-        return TaskCard(
-          taskData: canceledTaskList[index], onRefreshList: canceledTaskData,
-        );
-      },
-      separatorBuilder: (context, index) {
-        return const SizedBox(
-          height: 8,
-        );
-      },
-    );
-  }
-
-  Future<void> canceledTaskData() async {
-    canceledTaskInpogress = true;
-    setState(() {});
-
-    final NetworkResponse response =
-        await NetworkCaller.getRequest(Urls.showCanceledTask);
-
-    if (response.isSuccess) {
-      final TaskListModel taskListModel =
-          TaskListModel.fromJson(response.responseData);
-      canceledTaskList = taskListModel.tasklist ?? [];
-    } else {
-      showSnackBarMessage(context, response.errorMessage, true);
-    }
-
-    canceledTaskInpogress = false;
-    setState(() {});
+    controller.fetchCancelledTask();
+    return Obx(() {
+      if (controller.cancelledTaskInProgress.value) {
+        return const Center(child: CenterCircularProgressIndicator());
+      }
+      if (controller.canceledTaskList.isEmpty) {
+        return const Center(child: Text("No completed tasks found."));
+      }
+      return ListView.separated(
+        itemCount: controller.canceledTaskList.length,
+        itemBuilder: (context, index) {
+          return TaskCard(
+            taskData: controller.canceledTaskList[index],
+            onRefreshList: controller.fetchCancelledTask,
+          );
+        },
+        separatorBuilder: (context, index) {
+          return const SizedBox(
+            height: 8,
+          );
+        },
+      );
+    });
   }
 }

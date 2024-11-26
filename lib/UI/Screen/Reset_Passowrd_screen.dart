@@ -1,29 +1,20 @@
+
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'package:task_manager/Data/Models/Network_Response.dart';
-import 'package:task_manager/Data/Services/Network_Caller.dart';
-import 'package:task_manager/UI/Screen/SignInScreen.dart';
-import 'package:task_manager/UI/Utils/app_colors.dart';
-import 'package:task_manager/UI/Widgets/SnackBarMessage.dart';
-import 'package:task_manager/UI/Widgets/screenBackground.dart';
+import 'package:get/get.dart';
+import '../Controllers/Reset_Password_Controller.dart';
+import '../Utils/app_colors.dart';
+import '../Widgets/Center_Circular_Progress_Indicator.dart';
+import '../Widgets/screenBackground.dart';
+import 'SignInScreen.dart';
 
-import '../../Data/Utils/Urls.dart';
-
-class ResetPasswordScreen extends StatefulWidget {
+class ResetPasswordScreen extends StatelessWidget {
   ResetPasswordScreen({super.key, required this.email, this.otp});
   final String email;
-  final otp;
+  final String? otp;
 
-  @override
-  State<ResetPasswordScreen> createState() => _ResetPasswordScreenState();
-}
+  final ResetPasswordController resetPasswordController = Get.find<ResetPasswordController>();
 
-class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
-  final TextEditingController passwordCtrl = TextEditingController();
-  final TextEditingController confirmPasswordCtrl = TextEditingController();
-  final GlobalKey<FormState> _globalKey = GlobalKey<FormState>();
-
-  bool recoveryPassInprogress = false;
 
   @override
   Widget build(BuildContext context) {
@@ -31,150 +22,102 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
 
     return Scaffold(
       body: ScreenBackground(
-          child: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const SizedBox(
-                height: 80,
-              ),
-              Text(
-                "Set Password",
-                style: textTheme.displaySmall
-                    ?.copyWith(fontWeight: FontWeight.w500),
-              ),
-              Text(
-                "Minimum number of password should be 8 letters",
-                style: textTheme.titleMedium?.copyWith(color: Colors.grey),
-              ),
-              const SizedBox(
-                height: 20,
-              ),
-              buildResetPasswordForm(),
-              const SizedBox(
-                height: 30,
-              ),
-              buildHaveAnAccountSection()
-            ],
-          ),
-        ),
-      )),
-    );
-  }
-
-  Widget buildHaveAnAccountSection() {
-    return Center(
-      child: Column(
-        children: [
-          RichText(
-            text: TextSpan(
-              style: const TextStyle(
-                  color: Colors.black,
-                  fontWeight: FontWeight.w600,
-                  fontSize: 16,
-                  letterSpacing: 0.5),
-              text: "Have an account? ",
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                TextSpan(
-                  style: const TextStyle(color: AppColors.themeColor),
-                  text: 'Sign In',
-                  recognizer: TapGestureRecognizer()..onTap = onTapSignIn,
+                const SizedBox(height: 80),
+                Text(
+                  "Set Password",
+                  style: textTheme.displaySmall?.copyWith(fontWeight: FontWeight.w500),
                 ),
+                Text(
+                  "Minimum number of password should be 8 letters",
+                  style: textTheme.titleMedium?.copyWith(color: Colors.grey),
+                ),
+                const SizedBox(height: 20),
+                buildResetPasswordForm(),
+                const SizedBox(height: 30),
+                buildHaveAnAccountSection(),
               ],
             ),
           ),
-        ],
+        ),
       ),
     );
   }
 
   Widget buildResetPasswordForm() {
     return Form(
-      key: _globalKey,
+      key: resetPasswordController.formKey,
       child: Column(
         children: [
           TextFormField(
-            validator: (value) {
-              if (value!.isEmpty) {
-                return 'Enter Password';
-              }
-              return null;
-            },
-            controller: passwordCtrl,
-            decoration: const InputDecoration(
-              hintText: "Password",
-            ),
+            controller: resetPasswordController.passwordCtrl,
+            validator: (value) => value!.isEmpty ? 'Enter Password' : null,
+            decoration: const InputDecoration(hintText: "Password"),
           ),
-          const SizedBox(
-            height: 8,
-          ),
+          const SizedBox(height: 8),
           TextFormField(
-            controller: confirmPasswordCtrl,
+            controller: resetPasswordController.confirmPasswordCtrl,
             validator: (value) {
-              if (value!.isEmpty) {
-                return 'Enter Password';
-              } else if (value != passwordCtrl.text) {
-                return 'Password not match';
-              }
+              if (value!.isEmpty) return 'Enter Password';
+              if (value != resetPasswordController.passwordCtrl.text) return 'Password does not match';
               return null;
             },
-            decoration: const InputDecoration(
-              hintText: "Confirm Password",
-            ),
+            decoration: const InputDecoration(hintText: "Confirm Password"),
           ),
-          const SizedBox(
-            height: 20,
-          ),
-          ElevatedButton(
-            onPressed: onTapNextButton,
-            child: const Icon(Icons.arrow_circle_right_outlined),
-          ),
+          const SizedBox(height: 20),
+          Obx(() {
+            return Visibility(
+              visible: !resetPasswordController.recoveryPassInProgress,
+              replacement: const CenterCircularProgressIndicator(),
+              child: ElevatedButton(
+                onPressed: () => resetPasswordController.changePassword(
+                  email,
+                  otp,
+                  resetPasswordController.passwordCtrl.text.trim(),
+                  onSuccess: () {
+                   // showSnackBarMessage(context, 'Password changed successfully', true);
+                  Get.to(SignInScreen());
+
+                  },
+                  onError: (message) {
+                  },
+                ),
+                child: const Icon(Icons.arrow_circle_right_outlined),
+              ),
+            );
+          }),
         ],
       ),
     );
   }
 
-  void onTapNextButton() {
-    if (_globalKey.currentState!.validate()) {
-      changePassword();
-    } else {
-      print('Wrong');
-    }
-  }
-
-  Future<void> changePassword() async {
-    recoveryPassInprogress = true;
-    setState(() {});
-
-    Map<String, dynamic> requestBody = {
-      "email": widget.email,
-      "OTP": widget.otp,
-      "password": passwordCtrl.text
-    };
-
-    final NetworkResponse response =
-        await NetworkCaller.postRequest(Urls.recoverResetPassword, requestBody);
-
-    if (response.isSuccess) {
-      showSnackBarMessage(context, 'Successfully password changed', true);
-      Navigator.pushAndRemoveUntil(
-          context,
-          MaterialPageRoute(builder: (context) => const SignInScreen()),
-          (_) => false);
-    } else {
-      showSnackBarMessage(context, response.errorMessage, true);
-    }
-
-    recoveryPassInprogress = false;
-    setState(() {});
-  }
-
-  void onTapSignIn() {
-    Navigator.pushAndRemoveUntil(
-        context,
-        MaterialPageRoute(builder: (context) => const SignInScreen()),
-        (_) => false);
+  Widget buildHaveAnAccountSection() {
+    return Center(
+      child: RichText(
+        text: TextSpan(
+          style: const TextStyle(
+            color: Colors.black,
+            fontWeight: FontWeight.w600,
+            fontSize: 16,
+            letterSpacing: 0.5,
+          ),
+          text: "Have an account? ",
+          children: [
+            TextSpan(
+              text: 'Sign In',
+              style: const TextStyle(color: AppColors.themeColor),
+              recognizer: TapGestureRecognizer()..onTap = () {
+               Get.offAllNamed(SignInScreen.name);
+              },
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }

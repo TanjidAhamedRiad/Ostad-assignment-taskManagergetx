@@ -6,19 +6,20 @@ import 'package:task_manager/UI/Screen/Home_New_screen.dart';
 import 'package:task_manager/UI/Widgets/TM_AppBar.dart';
 
 class MainButtonNavbarScreen extends StatefulWidget {
+  static const String name = '/Home_dashboard';
   const MainButtonNavbarScreen({super.key});
-
   @override
   State<MainButtonNavbarScreen> createState() => _MainButtonNavbarScreenState();
 }
 
 class _MainButtonNavbarScreenState extends State<MainButtonNavbarScreen> {
+
   int selectedKey = 0;
-  List<Widget> screens = const [
-    NewScreen(),
+  List<Widget> screens = [
+     NewScreen(),
     CompletedScreen(),
-    CancelScreen(),
-    ProgressScreen()
+     CancelScreen(),
+     ProgressScreen()
   ];
   
   @override

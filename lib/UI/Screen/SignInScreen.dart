@@ -1,10 +1,7 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'package:task_manager/Data/Models/ListModel.dart';
-import 'package:task_manager/Data/Models/Network_Response.dart';
-import 'package:task_manager/Data/Services/Network_Caller.dart';
-import 'package:task_manager/Data/Utils/Urls.dart';
-import 'package:task_manager/UI/Controllers/auth_controller.dart';
+
+import 'package:task_manager/UI/Controllers/signIn_Controller.dart';
 import 'package:task_manager/UI/Screen/Forgot_password_Email_Screen.dart';
 import 'package:task_manager/UI/Screen/SingUpScreen.dart';
 import 'package:task_manager/UI/Utils/app_colors.dart';
@@ -13,8 +10,10 @@ import 'package:task_manager/UI/Widgets/screenBackground.dart';
 import '../Widgets/Center_Circular_Progress_Indicator.dart';
 import '../Widgets/SnackBarMessage.dart';
 import 'Main_Button_NavBar_Screen.dart';
+import 'package:get/get.dart';
 
 class SignInScreen extends StatefulWidget {
+  static const String name = '/SignInScreen';
   const SignInScreen({super.key});
 
   @override
@@ -22,10 +21,10 @@ class SignInScreen extends StatefulWidget {
 }
 
 class _SignInScreenState extends State<SignInScreen> {
-  bool inProgress = false;
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   final TextEditingController emailCtrl = TextEditingController();
   final TextEditingController passwordCtrl = TextEditingController();
+  final SignInController signInController = Get.find<SignInController>();
 
   @override
   Widget build(BuildContext context) {
@@ -96,7 +95,7 @@ class _SignInScreenState extends State<SignInScreen> {
     Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (context) => FotgotPasswordEmailScreen(),
+          builder: (context) => ForgotPasswordEmailScreen(),
         ));
   }
 
@@ -128,7 +127,7 @@ class _SignInScreenState extends State<SignInScreen> {
               hintText: "Password",
             ),
             validator: (String? value) {
-              if (value!.isEmpty ) {
+              if (value!.isEmpty) {
                 return 'Enter password';
               }
               return null;
@@ -137,14 +136,16 @@ class _SignInScreenState extends State<SignInScreen> {
           const SizedBox(
             height: 20,
           ),
-          Visibility(
-            visible: !inProgress,
-            replacement: const CenterCircularProgressIndicator(),
-            child: ElevatedButton(
-              onPressed: onTapNextButton,
-              child: const Icon(Icons.arrow_circle_right_outlined),
-            ),
-          ),
+          GetBuilder<SignInController>(builder: (controller) {
+            return Visibility(
+              visible: !controller.inProgress,
+              replacement: const CenterCircularProgressIndicator(),
+              child: ElevatedButton(
+                onPressed: onTapNextButton,
+                child: const Icon(Icons.arrow_circle_right_outlined),
+              ),
+            );
+          }),
         ],
       ),
     );
@@ -158,33 +159,13 @@ class _SignInScreenState extends State<SignInScreen> {
   }
 
   Future<void> signInSystem() async {
-    inProgress = true;
-    setState(() {});
+    final bool result = await signInController.signInSystem(
+        emailCtrl.text.trim(), passwordCtrl.text.trim());
 
-    Map<String, dynamic> requestBody = {
-      "email": emailCtrl.text,
-      "password": passwordCtrl.text
-    };
-
-    inProgress = false;
-    setState(() {});
-
-    NetworkResponse response =
-        await NetworkCaller.postRequest(Urls.login, requestBody);
-
-    if (response.isSuccess) {
-      print('ResponseData : ${response.responseData}');
-      LoginModel loginModel = await LoginModel.fromJson(response.responseData);
-      await AuthController.saveAccessToken(loginModel.token.toString());
-      await AuthController.saveUserData(loginModel.data!);
-      Navigator.pushAndRemoveUntil(
-          context,
-          MaterialPageRoute(
-            builder: (context) => const MainButtonNavbarScreen(),
-          ),
-          (_) => false);
+    if (result) {
+      Get.offAllNamed(MainButtonNavbarScreen.name);
     } else {
-      showSnackBarMessage(context, response.errorMessage, true);
+      showSnackBarMessage(context, signInController.errorMessage!, true);
     }
   }
 

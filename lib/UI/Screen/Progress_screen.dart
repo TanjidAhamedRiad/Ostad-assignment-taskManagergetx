@@ -1,62 +1,42 @@
 import 'package:flutter/material.dart';
-
-import '../../Data/Models/Network_Response.dart';
-import '../../Data/Models/TaskListModel.dart';
-import '../../Data/Services/Network_Caller.dart';
-import '../../Data/Utils/Urls.dart';
-import '../Widgets/SnackBarMessage.dart';
+import 'package:get/get.dart';
+import 'package:task_manager/UI/Controllers/progress_screen_controller.dart';
 import '../Widgets/Task_Card.dart';
 
-class ProgressScreen extends StatefulWidget {
-  const ProgressScreen({super.key});
 
-  @override
-  State<ProgressScreen> createState() => _ProgressScreenState();
-}
-
-class _ProgressScreenState extends State<ProgressScreen> {
-  bool progressedTaskInpogress = false;
-  List progressedTaskList = [];
-
-  @override
-  void initState() {
-    super.initState();
-    progressedTaskData();
-  }
-
+class ProgressScreen extends StatelessWidget {
+   ProgressScreen({super.key});
+  final ProgressScreenController progressScreenController = Get.find<ProgressScreenController>();
+final controller = Get.find<ProgressScreenController>();
   @override
   Widget build(BuildContext context) {
-    return ListView.separated(
-      itemCount: progressedTaskList.length,
-      itemBuilder: (context, index) {
-        return TaskCard(
-          taskData: progressedTaskList[index], onRefreshList: progressedTaskData,
+controller.progressedTaskData();
+
+    return Obx(() {
+      if (controller.progressTaskInProgress.value) {
+        return const Center(
+          child: CircularProgressIndicator(),
         );
-      },
-      separatorBuilder: (context, index) {
-        return const SizedBox(
-          height: 8,
+      }
+
+      if (controller.progressTaskList.isEmpty) {
+        return const Center(
+          child: Text("No tasks found."),
         );
-      },
-    );
-  }
+      }
 
-  Future<void> progressedTaskData() async {
-    progressedTaskInpogress = true;
-    setState(() {});
-
-    final NetworkResponse response =
-        await NetworkCaller.getRequest(Urls.showProgressedTask);
-
-    if (response.isSuccess) {
-      final TaskListModel taskListModel =
-          TaskListModel.fromJson(response.responseData);
-      progressedTaskList = taskListModel.tasklist ?? [];
-    } else {
-      showSnackBarMessage(context, response.errorMessage, true);
-    }
-
-    progressedTaskInpogress = false;
-    setState(() {});
+      return ListView.separated(
+        itemCount: controller.progressTaskList.length,
+        itemBuilder: (context, index) {
+          return TaskCard(
+            taskData: controller.progressTaskList[index],
+            onRefreshList: controller.progressedTaskData,
+          );
+        },
+        separatorBuilder: (context, index) {
+          return const SizedBox(height: 8);
+        },
+      );
+    });
   }
 }
